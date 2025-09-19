@@ -18,7 +18,7 @@ public class Ball : MonoBehaviour
 
     public void ResetBall()
     {
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
         transform.position = Vector2.zero;
 
         CancelInvoke();
@@ -33,7 +33,7 @@ public class Ball : MonoBehaviour
 
     private void FixedUpdate()
     {
-        rb.velocity = rb.velocity.normalized * speed;
+        rb.linearVelocity = rb.linearVelocity.normalized * speed;
     }
 
 }

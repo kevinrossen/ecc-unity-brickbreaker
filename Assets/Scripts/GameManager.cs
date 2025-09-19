@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(-1)]
@@ -95,9 +95,15 @@ public class GameManager : MonoBehaviour
         LoadLevel(1);
     }
 
-    public void OnBrickHit(Brick brick)
+public void OnBrickHit(Brick brick, int pointsEarned = -1)
     {
-        score += brick.points;
+        // If no points specified, use the brick's points value
+        if (pointsEarned == -1)
+        {
+            pointsEarned = brick.points;
+        }
+        
+        score += pointsEarned;
 
         if (Cleared()) {
             LoadLevel(level + 1);
