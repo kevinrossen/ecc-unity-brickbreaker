@@ -23,6 +23,11 @@ public class LevelConfiguration : ScriptableObject
     [Range(0f, 1f)]
     public float musicVolume = 0.5f;
     
+    [Header("Grid Settings")]
+    public int rows = 6;
+    public int columns = 8;
+    public GameObject brickPrefab;
+    
     [Header("Brick Layout")]
     public BrickData[] availableBrickTypes;
     public Vector2Int gridSize = new Vector2Int(8, 6);
@@ -34,4 +39,7 @@ public class LevelConfiguration : ScriptableObject
     public float timeLimit = 60f;
     public bool ballSpeedIncreases = false;
     public float speedIncreaseRate = 0.1f;
+    
+    [Header("Layout Data")]
+    public System.Collections.Generic.List<BrickData> brickLayout = new System.Collections.Generic.List<BrickData>();
 }

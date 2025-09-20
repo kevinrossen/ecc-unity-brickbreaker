@@ -9,6 +9,7 @@ public class BrickData : ScriptableObject
     
     [Header("Gameplay")]
     public int pointValue = 100;
+    public int points => pointValue; // Alias for editor compatibility
     public int maxHealth = 1;
     public bool isUnbreakable = false;
     
