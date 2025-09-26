@@ -6,9 +6,20 @@ public class Ball : MonoBehaviour
     private Rigidbody2D rb;
     public float speed = 10f;
 
+    [Header("Spawning")]
+    [Tooltip("Optional. If set, the ball will spawn at this Transform's position.")]
+    [SerializeField] private Transform spawnPoint;
+    [Tooltip("Fallback spawn position if no spawn point is assigned. Defaults to the ball's initial position in the scene.")]
+    [SerializeField] private Vector2 spawnPosition = Vector2.zero;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        // If no explicit spawn point is assigned, remember the initial scene position as the spawn location
+        if (spawnPoint == null)
+        {
+            spawnPosition = transform.position;
+        }
     }
 
     private void Start()
@@ -19,7 +30,8 @@ public class Ball : MonoBehaviour
     public void ResetBall()
     {
         rb.linearVelocity = Vector2.zero;
-        transform.position = Vector2.zero;
+        // Use the assigned spawn point if available; otherwise, use the remembered initial position
+        transform.position = spawnPoint != null ? (Vector3)spawnPoint.position : (Vector3)spawnPosition;
 
         CancelInvoke();
         Invoke(nameof(SetRandomTrajectory), 1f);

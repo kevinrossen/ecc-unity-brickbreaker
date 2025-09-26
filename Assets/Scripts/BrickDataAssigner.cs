@@ -18,7 +18,7 @@ public class BrickDataAssigner : MonoBehaviour
     public void AssignBrickData()
     {
         // Find all brick objects
-        Brick[] allBricks = FindObjectsOfType<Brick>();
+        Brick[] allBricks = FindObjectsByType<Brick>(FindObjectsSortMode.None);
         
         Debug.Log($"Found {allBricks.Length} bricks to configure");
         

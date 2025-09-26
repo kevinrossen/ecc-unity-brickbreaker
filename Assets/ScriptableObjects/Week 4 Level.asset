@@ -1,0 +1,96 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56d487926641a034e88d0bd5f849e4a8, type: 3}
+  m_Name: Week 4 Level
+  m_EditorClassIdentifier: Assembly-CSharp::LevelConfiguration
+  levelName: Week 4 Test
+  levelDescription: A basic level
+  ballSpeed: 5
+  paddleSpeed: 8
+  targetScore: 1000
+  backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+  backgroundImage: {fileID: 0}
+  ballMaterial: {fileID: 0}
+  paddleMaterial: {fileID: 0}
+  backgroundMusic: {fileID: 0}
+  musicVolume: 0.5
+  rows: 7
+  columns: 7
+  brickPrefab: {fileID: 534804146086615082, guid: cf757f52d920c7c409a6e190166c5d28,
+    type: 3}
+  availableBrickTypes:
+  - {fileID: 11400000, guid: 1a3bf3ff86e83d34f8e64e539dc87f37, type: 2}
+  - {fileID: 11400000, guid: 282f2ad731cfa8647a0ced19e1ace8c0, type: 2}
+  - {fileID: 11400000, guid: e546a01b2c38b274ba6bfe5578afb189, type: 2}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 11400000, guid: f86971b9a96bdb64b9ac3eb663b80710, type: 2}
+  - {fileID: 11400000, guid: 9d03b3f80b2b2684d8479ecc30e25c24, type: 2}
+  - {fileID: 11400000, guid: b44070d60a67f4242ac914d0b9fd1ffc, type: 2}
+  - {fileID: 11400000, guid: 6981ed36d2041084892c326297e20381, type: 2}
+  gridSize: {x: 7, y: 7}
+  brickSpacing: 1.4
+  startPosition: {x: -13, y: 9.5}
+  hasTimeLimit: 0
+  timeLimit: 60
+  ballSpeedIncreases: 0
+  speedIncreaseRate: 0.1
+  layoutData: []
+  brickLayout:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 11400000, guid: e546a01b2c38b274ba6bfe5578afb189, type: 2}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 11400000, guid: e546a01b2c38b274ba6bfe5578afb189, type: 2}
+  - {fileID: 11400000, guid: 282f2ad731cfa8647a0ced19e1ace8c0, type: 2}
+  - {fileID: 11400000, guid: e546a01b2c38b274ba6bfe5578afb189, type: 2}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 0}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 11400000, guid: e546a01b2c38b274ba6bfe5578afb189, type: 2}
+  - {fileID: 11400000, guid: 282f2ad731cfa8647a0ced19e1ace8c0, type: 2}
+  - {fileID: 11400000, guid: 1a3bf3ff86e83d34f8e64e539dc87f37, type: 2}
+  - {fileID: 11400000, guid: 282f2ad731cfa8647a0ced19e1ace8c0, type: 2}
+  - {fileID: 11400000, guid: e546a01b2c38b274ba6bfe5578afb189, type: 2}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 0}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 11400000, guid: e546a01b2c38b274ba6bfe5578afb189, type: 2}
+  - {fileID: 11400000, guid: 282f2ad731cfa8647a0ced19e1ace8c0, type: 2}
+  - {fileID: 11400000, guid: e546a01b2c38b274ba6bfe5578afb189, type: 2}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 11400000, guid: e546a01b2c38b274ba6bfe5578afb189, type: 2}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 11400000, guid: 09ff9dc92d7da6c4ba1492a4765dc2fc, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
