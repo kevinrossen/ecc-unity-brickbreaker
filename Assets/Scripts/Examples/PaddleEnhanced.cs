@@ -11,8 +11,8 @@ public class PaddleEnhanced : MonoBehaviour
     // [ColorUsage] - HDR color picker | [TextArea] - Multi-line text box
     
     [Header("Movement Settings")]
-    [Range(20f, 100f)] [Tooltip("How fast the paddle moves left and right")]
-    [SerializeField] private float moveSpeed = 10f;
+    [Range(20f, 500f)] [Tooltip("How fast the paddle moves left and right")]
+    [SerializeField] private float moveSpeed = 50f;
     
     [Range(0.5f, 2f)] [Tooltip("Multiplier for speed boost powerup")]
     [SerializeField] private float speedBoostMultiplier = 1.5f;
