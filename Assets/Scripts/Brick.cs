@@ -5,20 +5,66 @@ public class Brick : MonoBehaviour
 {
     [Header("Brick Configuration")]
     public BrickData brickData;
+    [Tooltip("Optional visual profile that controls color mapping when no sprites are provided.")]
+    public BrickVisualProfile visualProfile;
     
-    // Legacy fields (keep for backwards compatibility)
-    public Sprite[] states = new Sprite[0];
-    public int points = 100;
-    public bool unbreakable;
+    // Legacy fields (kept for backwards compatibility but hidden to avoid confusion)
+    [HideInInspector] public Sprite[] states = new Sprite[0];
+    [HideInInspector] public int points = 100;
+    [HideInInspector] public bool unbreakable;
 
     private SpriteRenderer spriteRenderer;
     private int health;
     private AudioSource audioSource;
 
+    private void EnsureComponents()
+    {
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+    }
+
+    // Maps current health to a sprite index when using a sequence of sprites
+    // Rule: if there are enough sprites, use index = health - 1 (1-based health to 0-based index)
+    // If there are fewer sprites than max health, scale health across available sprite indices
+    private int SpriteIndexForHealth(int remaining, int max, int spriteCount)
+    {
+        if (spriteCount <= 0) return -1;
+        max = Mathf.Max(1, max);
+        remaining = Mathf.Clamp(remaining, 1, max);
+        if (max <= spriteCount)
+        {
+            // Direct mapping: health 1 -> index 0, ..., health max -> index max-1
+            return Mathf.Clamp(remaining - 1, 0, spriteCount - 1);
+        }
+        // Scale health 1..max to indices 0..spriteCount-1
+        if (max == 1) return 0;
+        float t = (remaining - 1f) / (max - 1f); // 0..1
+        int idx = Mathf.RoundToInt(t * (spriteCount - 1));
+        return Mathf.Clamp(idx, 0, spriteCount - 1);
+    }
+
+    private Color HealthToColor(int remaining, int max, bool unbreakable)
+    {
+        if (unbreakable) return visualProfile != null ? visualProfile.unbreakableColor : Color.gray;
+        remaining = Mathf.Max(0, remaining);
+        max = Mathf.Max(1, max);
+        float t = 1f - Mathf.Clamp01((remaining - 1) / (float)(max - 1 == 0 ? 1 : max - 1));
+        if (visualProfile != null && visualProfile.strengthGradient != null)
+        {
+            return visualProfile.strengthGradient.Evaluate(t);
+        }
+        // Fallback classic palette
+        if (t < 0.33f) return Color.red;
+        if (t < 0.66f) return new Color(1f, 0.5f, 0f);
+        if (t < 0.9f) return Color.green;
+        return Color.cyan;
+    }
+
     private void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        audioSource = GetComponent<AudioSource>();
+        EnsureComponents();
     }
 
     private void Start()
@@ -28,6 +74,8 @@ public class Brick : MonoBehaviour
 
 public void ResetBrick()
     {
+        // Ensure components exist even when instantiated in Edit mode (Awake may not have run)
+        EnsureComponents();
         gameObject.SetActive(true);
 
         // Use scriptable object data if available, otherwise fall back to legacy fields
@@ -38,20 +86,27 @@ public void ResetBrick()
         {
             if (useScriptableObject)
             {
-                health = brickData.maxHealth;
-                if (brickData.healthStates.Length > 0)
+                health = Mathf.Max(1, brickData.maxHealth);
+                if (brickData.healthStates.Length > 0 && spriteRenderer != null && (visualProfile == null || visualProfile.preferSpritesWhenAvailable))
                 {
-                    spriteRenderer.sprite = brickData.healthStates[health - 1];
+                    int idx = SpriteIndexForHealth(health, brickData.maxHealth, brickData.healthStates.Length);
+                    spriteRenderer.sprite = brickData.healthStates[Mathf.Clamp(idx, 0, brickData.healthStates.Length - 1)];
+                    // When using per-health sprites, don't override colors; assume sprites carry the visual state
                 }
-                spriteRenderer.color = brickData.brickColor;
+                else if (spriteRenderer != null)
+                {
+                    // No per-health sprites: encode strength via color
+                    spriteRenderer.color = HealthToColor(health, brickData.maxHealth, false);
+                }
             }
             else
             {
                 // Legacy behavior
-                health = states.Length;
-                if (states.Length > 0)
+                health = Mathf.Max(1, states.Length);
+                if (states.Length > 0 && spriteRenderer != null)
                 {
-                    spriteRenderer.sprite = states[health - 1];
+                    int idx = SpriteIndexForHealth(health, states.Length, states.Length);
+                    spriteRenderer.sprite = states[Mathf.Clamp(idx, 0, states.Length - 1)];
                 }
             }
         }
@@ -59,6 +114,7 @@ public void ResetBrick()
 
 private void Hit()
     {
+        EnsureComponents();
         bool useScriptableObject = brickData != null;
         bool isUnbreakableBlock = useScriptableObject ? brickData.isUnbreakable : unbreakable;
         
@@ -95,16 +151,22 @@ private void Hit()
         } 
         else 
         {
-            // Update sprite based on remaining health
-            if (useScriptableObject && brickData.healthStates.Length > 0)
+            // Update sprite based on remaining health (highest index at full health)
+            if (useScriptableObject && brickData.healthStates.Length > 0 && spriteRenderer != null && (visualProfile == null || visualProfile.preferSpritesWhenAvailable))
             {
-                int spriteIndex = Mathf.Clamp(health - 1, 0, brickData.healthStates.Length - 1);
-                spriteRenderer.sprite = brickData.healthStates[spriteIndex];
+                int spriteIndex = SpriteIndexForHealth(health, brickData.maxHealth, brickData.healthStates.Length);
+                spriteRenderer.sprite = brickData.healthStates[Mathf.Clamp(spriteIndex, 0, brickData.healthStates.Length - 1)];
             }
-            else if (states.Length > 0)
+            else if (states.Length > 0 && spriteRenderer != null)
             {
-                // Legacy behavior
-                spriteRenderer.sprite = states[health - 1];
+                // Legacy behavior (highest index = full)
+                int idx = SpriteIndexForHealth(health, states.Length, states.Length);
+                spriteRenderer.sprite = states[Mathf.Clamp(idx, 0, states.Length - 1)];
+            }
+            else if (useScriptableObject && spriteRenderer != null)
+            {
+                // No per-health sprites: update color to reflect remaining strength
+                spriteRenderer.color = HealthToColor(health, brickData.maxHealth, isUnbreakableBlock);
             }
         }
 

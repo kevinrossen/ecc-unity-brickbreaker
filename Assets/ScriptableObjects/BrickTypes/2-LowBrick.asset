@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 32a2a7abed7244f40a0b3ec1cbc25da2, type: 3}
-  m_Name: BasicBrick
+  m_Name: 2-LowBrick
   m_EditorClassIdentifier: Assembly-CSharp::BrickData
   healthStates:
   - {fileID: 21300000, guid: 9291c8a2243a8954aa4836cbb3d8cd46, type: 3}
@@ -18,9 +18,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 8a1f3a2b7be337041b9f2c591cc617db, type: 3}
   - {fileID: 21300000, guid: ded5f72da8d54b44d85ace0c5548180d, type: 3}
   - {fileID: 21300000, guid: 5e536f2cc14b65a44b8e9532d24f6c72, type: 3}
-  brickColor: {r: 1, g: 1, b: 1, a: 1}
+  brickColor: {r: 1, g: 0.5, b: 0, a: 1}
   pointValue: 100
-  maxHealth: 5
+  maxHealth: 2
   isUnbreakable: 0
   spawnsPowerup: 0
   powerupPrefab: {fileID: 0}

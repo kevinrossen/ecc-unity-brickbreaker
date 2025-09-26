@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [CreateAssetMenu(fileName = "New Level Config", menuName = "Game Data/Level Configuration")]
 public class LevelConfiguration : ScriptableObject
@@ -31,8 +32,8 @@ public class LevelConfiguration : ScriptableObject
     [Header("Brick Layout")]
     public BrickData[] availableBrickTypes;
     public Vector2Int gridSize = new Vector2Int(8, 6);
-    public float brickSpacing = 0.1f;
-    public Vector2 startPosition = new Vector2(-3.5f, 2f);
+    public float brickSpacing = 1.4f;
+    public Vector2 startPosition = new Vector2(-13f, 9.5f);
     
     [Header("Special Rules")]
     public bool hasTimeLimit = false;
@@ -41,5 +42,24 @@ public class LevelConfiguration : ScriptableObject
     public float speedIncreaseRate = 0.1f;
     
     [Header("Layout Data")]
-    public System.Collections.Generic.List<BrickData> brickLayout = new System.Collections.Generic.List<BrickData>();
+    public System.Collections.Generic.List<BrickData> layoutData = new System.Collections.Generic.List<BrickData>();
+
+    [Header("Brick Layout Authoring")]
+    public List<BrickData> brickLayout = new List<BrickData>(); // length = gridSize.x * gridSize.y
+
+    private void OnValidate()
+    {
+        // Keep gridSize in sync with rows/columns for consistency
+        gridSize = new Vector2Int(columns, rows);
+
+        // Ensure brickLayout is sized to rows * columns
+        int target = Mathf.Max(0, columns * rows);
+        if (brickLayout == null)
+            brickLayout = new List<BrickData>(target);
+
+        if (brickLayout.Count < target)
+            brickLayout.AddRange(new BrickData[target - brickLayout.Count]);
+        else if (brickLayout.Count > target)
+            brickLayout.RemoveRange(target, brickLayout.Count - target);
+    }
 }
