@@ -24,6 +24,20 @@ public class Ball : MonoBehaviour
 
     private void Start()
     {
+        // If a central settings asset is present, allow it to drive speed
+        if (GameManager.Instance != null)
+        {
+            var gm = GameManager.Instance;
+            var settingsField = typeof(GameManager).GetField("settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (settingsField != null)
+            {
+                var settings = settingsField.GetValue(gm) as GameSettings;
+                if (settings != null)
+                {
+                    speed = settings.ballSpeed;
+                }
+            }
+        }
         ResetBall();
     }
 

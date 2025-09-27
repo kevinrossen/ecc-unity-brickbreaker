@@ -1,13 +1,21 @@
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 
 [CustomEditor(typeof(LevelConfiguration))]
 public class LevelConfigurationEditor : Editor
 {
     private LevelConfiguration config;
+    // Editor-only cached reference to a scene LevelBuilder for quick builds
+    private static LevelBuilder cachedBuilder;
     private static bool includeUnbreakableBottomRow = false;
     private static int uiTopStrongRows = 2;
     private static int uiTotalBands = 4;
+    // Foldout states
+    private static bool _showBasics = true;
+    private static bool _showGeneration = true;
+    private static bool _showPresets = false;
+    private static bool _showStrengthBands = false;
     
     private void OnEnable()
     {
@@ -59,111 +67,118 @@ public class LevelConfigurationEditor : Editor
     {
         serializedObject.Update();
         
-        EditorGUILayout.LabelField("Level Designer", EditorStyles.boldLabel);
-        EditorGUILayout.Space();
-        
-        // Draw default properties
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("levelName"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("rows"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("columns"));
-        
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Brick Configuration", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("brickPrefab"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("availableBrickTypes"), true);
-        
-        // Validation warnings
-        if (config.rows <= 0 || config.columns <= 0)
+        // BASICS
+        _showBasics = EditorGUILayout.Foldout(_showBasics, "Basics", true);
+        if (_showBasics)
         {
-            EditorGUILayout.HelpBox("Rows and columns must be greater than 0!", MessageType.Error);
-        }
-        
-        if (config.brickPrefab == null)
-        {
-            EditorGUILayout.HelpBox("Brick prefab is missing! Assign a prefab to continue.", MessageType.Warning);
-        }
-        
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Level Generation Tools", EditorStyles.boldLabel);
-        
-        // Custom buttons for level patterns
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Generate Checkerboard", GUILayout.Height(30)))
-        {
-            GenerateCheckerboardPattern();
-        }
-        if (GUILayout.Button("Generate Diamond", GUILayout.Height(30)))
-        {
-            GenerateDiamondPattern();
-        }
-        EditorGUILayout.EndHorizontal();
-        
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Generate Random", GUILayout.Height(30)))
-        {
-            GenerateRandomPattern();
-        }
-        if (GUILayout.Button("Clear All", GUILayout.Height(30)))
-        {
-            ClearPattern();
-        }
-        EditorGUILayout.EndHorizontal();
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("levelName"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("rows"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("columns"));
 
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Presets", EditorStyles.boldLabel);
-        includeUnbreakableBottomRow = EditorGUILayout.ToggleLeft("Include Unbreakable Bottom Row", includeUnbreakableBottomRow);
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Apply Level 1 Colors", GUILayout.Height(26)))
-        {
-            ApplyLevelOneColors();
-        }
-        if (GUILayout.Button("Generate Level 1 Bands", GUILayout.Height(26)))
-        {
-            GenerateLevelOneBands();
-        }
-        if (GUILayout.Button("Placement: Top Aligned", GUILayout.Height(26)))
-        {
-            ApplyTopAlignedPlacement();
-        }
-        EditorGUILayout.EndHorizontal();
-        
-        // Special patterns
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Special Patterns", EditorStyles.boldLabel);
-        if (GUILayout.Button("Generate Fortress Box (single weak entry)", GUILayout.Height(26)))
-        {
-            GenerateFortressBoxPattern(GateSide.Bottom, singleGate:true, twoGates:false);
-        }
-        if (GUILayout.Button("Generate Fortress Box (two bottom entrances)", GUILayout.Height(26)))
-        {
-            GenerateFortressBoxPattern(GateSide.Bottom, singleGate:false, twoGates:true);
-        }
-        // Custom gate controls
-        EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Custom Gate", GUILayout.Width(90));
-        _gateSide = (GateSide)EditorGUILayout.EnumPopup(_gateSide);
-        _twoGates = EditorGUILayout.ToggleLeft("Two Entrances", _twoGates, GUILayout.Width(120));
-        if (GUILayout.Button("Generate Fortress (custom gate)", GUILayout.Height(24)))
-        {
-            GenerateFortressBoxPattern(_gateSide, singleGate:!_twoGates, twoGates:_twoGates);
-        }
-        EditorGUILayout.EndHorizontal();
-        if (GUILayout.Button("Generate Fortress + Maze Interior", GUILayout.Height(26)))
-        {
-            GenerateFortressMazePattern(_gateSide);
-        }
+            EditorGUILayout.Space(2);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("brickPrefab"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("availableBrickTypes"), true);
 
-        // Strength bands UI
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Strength Bands", EditorStyles.boldLabel);
-        EditorGUI.indentLevel++;
-        uiTopStrongRows = Mathf.Clamp(EditorGUILayout.IntField("Top Strong Rows", uiTopStrongRows), 1, Mathf.Max(1, config.rows));
-        uiTotalBands = Mathf.Clamp(EditorGUILayout.IntField("Total Bands", uiTotalBands), 2, 8);
-        EditorGUI.indentLevel--;
-        if (GUILayout.Button("Generate Strength Bands", GUILayout.Height(26)))
+            // Validation warnings
+            if (config.rows <= 0 || config.columns <= 0)
+            {
+                EditorGUILayout.HelpBox("Rows and columns must be greater than 0!", MessageType.Error);
+            }
+            if (config.brickPrefab == null)
+            {
+                EditorGUILayout.HelpBox("Brick prefab is missing! Assign a prefab to continue.", MessageType.Warning);
+            }
+    }
+
+        // GENERATION TOOLS
+        _showGeneration = EditorGUILayout.Foldout(_showGeneration, "Generation Tools", true);
+        if (_showGeneration)
         {
-            GenerateStrengthBands(uiTopStrongRows, uiTotalBands);
+            // Common generators
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Checkerboard", GUILayout.Height(26)))
+            {
+                GenerateCheckerboardPattern();
+            }
+            if (GUILayout.Button("Diamond", GUILayout.Height(26)))
+            {
+                GenerateDiamondPattern();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Random", GUILayout.Height(26)))
+            {
+                GenerateRandomPattern();
+            }
+            if (GUILayout.Button("Clear All", GUILayout.Height(26)))
+            {
+                ClearPattern();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("Fortress/Maze", EditorStyles.miniBoldLabel);
+            if (GUILayout.Button("Fortress: Single Gate (bottom)", GUILayout.Height(22)))
+            {
+                GenerateFortressBoxPattern(GateSide.Bottom, singleGate:true, twoGates:false);
+            }
+            if (GUILayout.Button("Fortress: Two Gates (bottom)", GUILayout.Height(22)))
+            {
+                GenerateFortressBoxPattern(GateSide.Bottom, singleGate:false, twoGates:true);
+            }
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Custom Gate", GUILayout.Width(90));
+            _gateSide = (GateSide)EditorGUILayout.EnumPopup(_gateSide);
+            _twoGates = EditorGUILayout.ToggleLeft("Two Entrances", _twoGates, GUILayout.Width(120));
+            if (GUILayout.Button("Generate Fortress (custom)", GUILayout.Height(22)))
+            {
+                GenerateFortressBoxPattern(_gateSide, singleGate:!_twoGates, twoGates:_twoGates);
+            }
+            EditorGUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Fortress + Maze Interior", GUILayout.Height(22)))
+            {
+                GenerateFortressMazePattern(_gateSide);
+            }
+    }
+
+        // PRESETS
+        _showPresets = EditorGUILayout.Foldout(_showPresets, "Presets", true);
+        if (_showPresets)
+        {
+            includeUnbreakableBottomRow = EditorGUILayout.ToggleLeft("Include Unbreakable Bottom Row", includeUnbreakableBottomRow);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Apply Level 1 Colors", GUILayout.Height(22)))
+            {
+                ApplyLevelOneColors();
+            }
+            if (GUILayout.Button("Generate Level 1 Bands", GUILayout.Height(22)))
+            {
+                GenerateLevelOneBands();
+            }
+            if (GUILayout.Button("Placement: Top Aligned", GUILayout.Height(22)))
+            {
+                ApplyTopAlignedPlacement();
+            }
+            EditorGUILayout.EndHorizontal();
+    }
+
+        // STRENGTH BANDS
+        _showStrengthBands = EditorGUILayout.Foldout(_showStrengthBands, "Strength Bands", true);
+        if (_showStrengthBands)
+        {
+            EditorGUI.indentLevel++;
+            uiTopStrongRows = Mathf.Clamp(EditorGUILayout.IntField("Top Strong Rows", uiTopStrongRows), 1, Mathf.Max(1, config.rows));
+            uiTotalBands = Mathf.Clamp(EditorGUILayout.IntField("Total Bands", uiTotalBands), 2, 8);
+            EditorGUI.indentLevel--;
+            if (GUILayout.Button("Generate Strength Bands", GUILayout.Height(24)))
+            {
+                GenerateStrengthBands(uiTopStrongRows, uiTotalBands);
+            }
         }
+        
 
         // Visual preview of brick layout
         EditorGUILayout.Space();
@@ -182,6 +197,61 @@ public class LevelConfigurationEditor : Editor
             EditorGUILayout.HelpBox("No bricks in level! Use generation tools above.", MessageType.Info);
         }
         
+        // --- Build in Scene (streamlined workflow) ---
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Build In Scene", EditorStyles.boldLabel);
+        using (new EditorGUILayout.VerticalScope("box"))
+        {
+            // Show or find a LevelBuilder in the currently open scene
+            cachedBuilder = (LevelBuilder)EditorGUILayout.ObjectField(new GUIContent("Level Builder (Scene)", "Target LevelBuilder in the active scene."), cachedBuilder, typeof(LevelBuilder), true);
+
+            if (cachedBuilder == null)
+            {
+                if (GUILayout.Button("Find LevelBuilder In Scene"))
+                {
+                    cachedBuilder = FindLevelBuilderInScene();
+                    if (cachedBuilder == null)
+                    {
+                        EditorUtility.DisplayDialog("Level Builder", "No LevelBuilder found in the open scene.", "OK");
+                    }
+                }
+
+                if (GUILayout.Button("Create LevelBuilder In Scene"))
+                {
+                    cachedBuilder = CreateLevelBuilderInScene();
+                }
+            }
+
+            using (new EditorGUI.DisabledScope(cachedBuilder == null))
+            {
+                if (cachedBuilder != null)
+                {
+                    EditorGUILayout.HelpBox($"Target: '{cachedBuilder.gameObject.name}'", MessageType.None);
+
+                    // Option to assign this config to the builder before building
+                    bool assignConfig = true;
+                    assignConfig = EditorGUILayout.ToggleLeft("Assign this template to the builder before building", assignConfig);
+
+                    EditorGUILayout.BeginHorizontal();
+                    if (GUILayout.Button("Build Now", GUILayout.Height(26)))
+                    {
+                        BuildIntoScene(cachedBuilder, assignConfig);
+                    }
+                    if (GUILayout.Button("Clear Built Bricks", GUILayout.Height(26)))
+                    {
+                        ClearBuiltBricks(cachedBuilder);
+                    }
+                    EditorGUILayout.EndHorizontal();
+
+                    if (GUILayout.Button("Select Builder In Hierarchy"))
+                    {
+                        Selection.activeObject = cachedBuilder.gameObject;
+                        EditorGUIUtility.PingObject(cachedBuilder.gameObject);
+                    }
+                }
+            }
+        }
+
         serializedObject.ApplyModifiedProperties();
     }
     
@@ -643,5 +713,79 @@ public class LevelConfigurationEditor : Editor
             if (brick != null) count++;
         }
         return count;
+    }
+
+    // --- Scene integration helpers ---
+    private LevelBuilder FindLevelBuilderInScene()
+    {
+        // Try to find an existing builder (active and inactive)
+#if UNITY_2023_1_OR_NEWER
+        var arr = Object.FindObjectsByType<LevelBuilder>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        return arr != null && arr.Length > 0 ? arr[0] : null;
+#else
+        // Fallback for older Unity: slower but compatible
+        var all = Resources.FindObjectsOfTypeAll<LevelBuilder>();
+        // Prefer objects in valid scenes (exclude prefabs/assets)
+        foreach (var b in all)
+        {
+            if (b != null && b.gameObject.scene.IsValid()) return b;
+        }
+        return null;
+#endif
+    }
+
+    private LevelBuilder CreateLevelBuilderInScene()
+    {
+        var go = new GameObject("Level Builder");
+        Undo.RegisterCreatedObjectUndo(go, "Create Level Builder");
+        var builder = go.AddComponent<LevelBuilder>();
+        // Try to place it at origin for convenience
+        go.transform.position = Vector3.zero;
+        // Assign this config so Build uses it immediately
+        var so = new SerializedObject(builder);
+        so.FindProperty("config").objectReferenceValue = config;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        EditorSceneManager.MarkSceneDirty(go.scene);
+        Selection.activeObject = go;
+        return builder;
+    }
+
+    private void BuildIntoScene(LevelBuilder builder, bool assignConfig)
+    {
+        if (builder == null)
+        {
+            EditorUtility.DisplayDialog("Level Builder", "No LevelBuilder selected.", "OK");
+            return;
+        }
+
+        if (assignConfig)
+        {
+            var so = new SerializedObject(builder);
+            so.FindProperty("config").objectReferenceValue = config;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(builder);
+        }
+
+        // Group undo so user can revert if needed
+        Undo.IncrementCurrentGroup();
+        int group = Undo.GetCurrentGroup();
+        Undo.RegisterFullObjectHierarchyUndo(builder.gameObject, "Build Level");
+
+        // Call runtime method (works in edit mode as well)
+        builder.BuildLevel();
+
+        Undo.CollapseUndoOperations(group);
+        EditorSceneManager.MarkSceneDirty(builder.gameObject.scene);
+    }
+
+    private void ClearBuiltBricks(LevelBuilder builder)
+    {
+        if (builder == null) return;
+        Undo.IncrementCurrentGroup();
+        int group = Undo.GetCurrentGroup();
+        Undo.RegisterFullObjectHierarchyUndo(builder.gameObject, "Clear Built Bricks");
+        builder.ClearSpawned();
+        Undo.CollapseUndoOperations(group);
+        EditorSceneManager.MarkSceneDirty(builder.gameObject.scene);
     }
 }

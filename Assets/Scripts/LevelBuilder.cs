@@ -18,11 +18,16 @@ public class LevelBuilder : MonoBehaviour
     [SerializeField] private GameObject brickPrefabOverride;
 
     [Header("Layout Placement")]
+    [Tooltip("If true and AnchorMode is Config, use LevelConfiguration.startPosition for placement. Otherwise, Start Position below is used or computed by the selected Anchor Mode.")]
     [SerializeField] private bool useConfigPlacement = true;
+    [Tooltip("If true, pull Brick Spacing from LevelConfiguration.brickSpacing. When false, the Brick Spacing field on this component is used.")]
+    [SerializeField] private bool useSpacingFromConfig = false;
     [SerializeField] private bool autoCellSizeFromPrefab = true;
+    [Tooltip("Starting center position for the TOP-LEFT brick when Anchor Mode is 'Config'. Ignored by Camera/Paddle/Midpoint modes except in fallback cases (no camera, perspective camera, etc.).")]
     [SerializeField] private Vector2 startPosition = new Vector2(-7.5f, 4f);
     [SerializeField] private float cellWidth = 1f;
     [SerializeField] private float cellHeight = 0.5f;
+    [Tooltip("Horizontal/vertical spacing added between bricks (in world units). Used unless 'Use Spacing From Config' is enabled.")]
     [SerializeField] private float spacing = 0.1f;
     [SerializeField] private bool groupByRows = true;
 
@@ -42,9 +47,9 @@ public class LevelBuilder : MonoBehaviour
 
     private void ResolvePlacement(GameObject prefab)
     {
-        if (config != null && useConfigPlacement)
+        if (config != null && useSpacingFromConfig)
         {
-            // Pull spacing from config; startPosition will be computed adaptively if enabled.
+            // Pull spacing from config when explicitly requested
             spacing = config.brickSpacing;
         }
 
@@ -74,10 +79,9 @@ public class LevelBuilder : MonoBehaviour
                     ComputeStartPositionMidpoint(config.rows, config.columns);
                     break;
                 case AnchorMode.Config:
+                    // In Config mode we can choose to use the start position from the asset or keep the local one
                     if (useConfigPlacement)
-                    {
                         startPosition = config.startPosition;
-                    }
                     break;
             }
         }

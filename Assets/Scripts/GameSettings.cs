@@ -1,58 +1,41 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Game Settings", menuName = "Game Data/Game Settings")]
+[CreateAssetMenu(fileName = "GameSettings", menuName = "BrickBreaker/Game Settings", order = 0)]
 public class GameSettings : ScriptableObject
 {
-    [Header("Player Progression")]
-    public int startingLives = 3;
-    public int maxLives = 5;
-    public int bonusLifeScore = 10000;
-    
-    [Header("Scoring")]
-    public int perfectLevelBonus = 500;
-    public float timeBonus = 10f; // points per second remaining
-    public float comboMultiplier = 1.5f;
-    
-    [Header("Controls")]
-    public KeyCode leftKey = KeyCode.A;
-    public KeyCode rightKey = KeyCode.D;
-    public KeyCode pauseKey = KeyCode.Escape;
-    public KeyCode launchBallKey = KeyCode.Space;
-    
-    [Header("Visual Settings")]
-    public bool screenShakeEnabled = true;
-    public float screenShakeIntensity = 0.1f;
-    public bool particleEffectsEnabled = true;
-    
-    [Header("Audio Settings")]
-    [Range(0f, 1f)]
-    public float masterVolume = 1f;
-    [Range(0f, 1f)]
-    public float sfxVolume = 0.8f;
-    [Range(0f, 1f)]
-    public float musicVolume = 0.6f;
-    
-    [Header("Difficulty Settings")]
-    public float easyBallSpeed = 4f;
-    public float normalBallSpeed = 6f;
-    public float hardBallSpeed = 8f;
-    
-    public enum DifficultyLevel
+    [Header("Ball Settings")]
+    [Min(0.1f)] public float ballSpeed = 10f;
+
+    [Space]
+    [Header("Paddle Settings")]
+    [Min(0.1f)] public float paddleMoveSpeed = 50f;
+    [Range(0f, 85f)] public float paddleMaxBounceAngle = 75f;
+
+    [System.Serializable]
+    public class LevelBuilderGroup
     {
-        Easy,
-        Normal,
-        Hard
+        public bool applyToLevelBuilders = false;
+
+        [Header("Source Data Overrides")]
+        public bool useConfigPlacement = true;
+        public bool useSpacingFromConfig = false;
+        public bool autoCellSizeFromPrefab = true;
+        public Vector2 startPosition = new Vector2(-7.5f, 4f);
+        public float cellWidth = 1f;
+        public float cellHeight = 0.5f;
+        public float spacing = 0.1f;
+        public bool groupByRows = true;
+
+        [Header("Adaptive Placement Overrides")]
+        public LevelBuilder.AnchorMode anchorMode = LevelBuilder.AnchorMode.MidpointPaddleToTop;
+        public float verticalGapAbovePaddle = 2f;
+        public bool clampToCameraViewport = true;
+        public float cameraTopMargin = 2f;
+        public float cameraSideMargin = 0.5f;
+        public bool debugPlacement = false;
     }
-    
-    public DifficultyLevel currentDifficulty = DifficultyLevel.Normal;
-    
-    public float GetBallSpeedForDifficulty()
-    {
-        switch (currentDifficulty)
-        {
-            case DifficultyLevel.Easy: return easyBallSpeed;
-            case DifficultyLevel.Hard: return hardBallSpeed;
-            default: return normalBallSpeed;
-        }
-    }
+
+    [Space]
+    [Header("Level Builder Settings (Optional)")]
+    public LevelBuilderGroup levelBuilder = new LevelBuilderGroup();
 }

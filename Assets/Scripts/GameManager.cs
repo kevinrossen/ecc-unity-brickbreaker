@@ -8,6 +8,9 @@ public class GameManager : MonoBehaviour
 
     private const int NUM_LEVELS = 2;
 
+    [Header("Central Settings")]
+    [SerializeField] private GameSettings settings;
+
     private Ball ball;
     private Paddle paddle;
     // Optional alternate paddle implementation (identified by type name at runtime)
@@ -26,6 +29,7 @@ public class GameManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             FindSceneReferences();
+            ApplySettings();
         }
     }
 
@@ -80,6 +84,7 @@ public class GameManager : MonoBehaviour
     {
         SceneManager.sceneLoaded -= OnLevelLoaded;
         FindSceneReferences();
+        ApplySettings();
     }
 
     public void OnBallMiss()
@@ -98,8 +103,15 @@ public class GameManager : MonoBehaviour
         // Ensure references are valid (can be lost on scene reloads or domain refreshes)
         if ((paddle == null && paddleEnhanced == null) || ball == null)
         {
-            Debug.LogWarning("GameManager: Lost scene references. Rebinding...");
+            // Try a silent rebind first to avoid noisy warnings during normal play
             FindSceneReferences();
+            ApplySettings();
+
+            // If still missing after rebind, surface a clear error
+            if ((paddle == null && paddleEnhanced == null) || ball == null)
+            {
+                Debug.LogError("GameManager: Missing scene references after rebind attempt. Check that a Ball and a Paddle (or PaddleEnhanced) exist and are active in the scene.");
+            }
         }
 
         ResetActivePaddle();
@@ -111,6 +123,91 @@ public class GameManager : MonoBehaviour
         else
         {
             Debug.LogError("GameManager: Ball reference is missing; cannot reset ball.");
+        }
+    }
+
+    private void ApplySettings()
+    {
+        if (settings == null)
+        {
+            return;
+        }
+
+        // Apply to Ball
+        if (ball == null) ball = FindFirstObjectByType<Ball>();
+        if (ball != null)
+        {
+            ball.speed = settings.ballSpeed;
+        }
+
+        // Apply to standard Paddle
+        if (paddle == null)
+        {
+            var paddles = FindObjectsByType<Paddle>(FindObjectsSortMode.None);
+            paddle = System.Array.Find(paddles, p => p != null && p.isActiveAndEnabled);
+        }
+        if (paddle != null)
+        {
+            paddle.speed = settings.paddleMoveSpeed;
+            paddle.maxBounceAngle = settings.paddleMaxBounceAngle;
+        }
+
+        // Apply to PaddleEnhanced via reflection of known fields
+        if (paddleEnhanced == null)
+        {
+            var behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int i = 0; i < behaviours.Length; i++)
+            {
+                var b = behaviours[i];
+                if (b != null && b.isActiveAndEnabled && b.GetType().Name == "PaddleEnhanced")
+                {
+                    paddleEnhanced = b; break;
+                }
+            }
+        }
+
+        if (paddleEnhanced != null)
+        {
+            var t = paddleEnhanced.GetType();
+            var moveSpeedField = t.GetField("moveSpeed", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var maxAngleField = t.GetField("maxBounceAngle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (moveSpeedField != null) moveSpeedField.SetValue(paddleEnhanced, settings.paddleMoveSpeed);
+            if (maxAngleField != null) maxAngleField.SetValue(paddleEnhanced, settings.paddleMaxBounceAngle);
+        }
+
+        // Optionally apply to LevelBuilder instances
+        if (settings.levelBuilder != null && settings.levelBuilder.applyToLevelBuilders)
+        {
+            var builders = FindObjectsByType<LevelBuilder>(FindObjectsSortMode.None);
+            for (int i = 0; i < builders.Length; i++)
+            {
+                var lb = builders[i];
+                if (lb == null) continue;
+
+                // Use reflection to set serialized private fields
+                var lbType = typeof(LevelBuilder);
+
+                void Set<T>(string name, T value)
+                {
+                    var f = lbType.GetField(name, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (f != null && f.FieldType == typeof(T)) f.SetValue(lb, value);
+                }
+
+                Set("useConfigPlacement", settings.levelBuilder.useConfigPlacement);
+                Set("useSpacingFromConfig", settings.levelBuilder.useSpacingFromConfig);
+                Set("autoCellSizeFromPrefab", settings.levelBuilder.autoCellSizeFromPrefab);
+                Set("startPosition", settings.levelBuilder.startPosition);
+                Set("cellWidth", settings.levelBuilder.cellWidth);
+                Set("cellHeight", settings.levelBuilder.cellHeight);
+                Set("spacing", settings.levelBuilder.spacing);
+                Set("groupByRows", settings.levelBuilder.groupByRows);
+                Set("anchorMode", settings.levelBuilder.anchorMode);
+                Set("verticalGapAbovePaddle", settings.levelBuilder.verticalGapAbovePaddle);
+                Set("clampToCameraViewport", settings.levelBuilder.clampToCameraViewport);
+                Set("cameraTopMargin", settings.levelBuilder.cameraTopMargin);
+                Set("cameraSideMargin", settings.levelBuilder.cameraSideMargin);
+                Set("debugPlacement", settings.levelBuilder.debugPlacement);
+            }
         }
     }
 

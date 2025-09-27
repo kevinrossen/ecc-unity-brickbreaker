@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de6c410914bdf9b47af03e3888f6f7df, type: 3}
+  m_Name: GameSettings
+  m_EditorClassIdentifier: Assembly-CSharp::GameSettings
+  ballSpeed: 10
+  paddleMoveSpeed: 50
+  paddleMaxBounceAngle: 75
+  paddleMaxHorizontalPosition: 8
+  levelBuilder:
+    applyToLevelBuilders: 0
+    useConfigPlacement: 1
+    useSpacingFromConfig: 0
+    autoCellSizeFromPrefab: 1
+    startPosition: {x: -7.5, y: 4}
+    cellWidth: 1
+    cellHeight: 0.5
+    spacing: 0.1
+    groupByRows: 1
+    anchorMode: 3
+    verticalGapAbovePaddle: 2
+    clampToCameraViewport: 1
+    cameraTopMargin: 2
+    cameraSideMargin: 0.5
+    debugPlacement: 0
