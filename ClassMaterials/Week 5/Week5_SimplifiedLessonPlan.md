@@ -77,41 +77,45 @@ public class Brick : MonoBehaviour
 
 #### Hands-On Activity: Add Event to Ball Miss (10 minutes)
 
-**Students follow along:**
+**Students follow along (project-aligned):**
 
-1. **Open Ball script or ResetZone script**
-   
-2. **Add UnityEvent at the top:**
+1. Open `ResetZone_DecoupledEvent` (your project already uses a decoupled ResetZone with a static C# event).
+
+2. Add a UnityEvent alongside the existing static event so you can wire Inspector responses without changing your current listeners:
 ```csharp
+using UnityEngine;
 using UnityEngine.Events;
 
-public class ResetZone : MonoBehaviour
+[RequireComponent(typeof(Collider2D))]
+public class ResetZone_DecoupledEvent : MonoBehaviour
 {
-    [Header("Events")]
-    public UnityEvent OnBallMissed;  // This will show in Inspector!
-    
-    private void OnTriggerEnter2D(Collider2D collision)
+    [Header("UnityEvent (Inspector-wired, optional)")]
+    public UnityEvent OnBallMissedUnityEvent; // Shows in Inspector
+
+    // Existing project pattern: static C# event for code listeners
+    public static event System.Action OnBallMissed;
+
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        if (collision.gameObject.name == "Ball")
-        {
-            // Invoke the event - anyone listening will respond
-            OnBallMissed?.Invoke();
-            
-            GameManager.Instance.OnBallMiss();
-        }
+        // Safer than name checks: use tag or component
+        if (!other.CompareTag("Ball") && other.GetComponent<Ball>() == null) return;
+
+        // Fire both: designers can hook UnityEvent; systems subscribe to static event
+        OnBallMissedUnityEvent?.Invoke();
+        OnBallMissed?.Invoke();
     }
 }
 ```
 
-3. **In Unity Inspector:**
+3. In Unity Inspector:
    - Select the ResetZone object
-   - Find "On Ball Missed" event
+    - Find "On Ball Missed Unity Event"
    - Click "+" to add a listener
    - Drag the Camera object to the empty slot
    - Select function: `Camera > Shake` (if you have a shake script)
    - OR connect to an audio source to play a sound
 
-4. **Test it!** When the ball is missed, the event triggers whatever you connected.
+4. Test it! When the ball is missed, both the Inspector-wired UnityEvent and your existing static event listeners (UI, Audio, GameManager) will respond.
 
 **Benefits of UnityEvents:**
 - Designers can configure responses without coding
@@ -128,110 +132,83 @@ public class ResetZone : MonoBehaviour
 
 #### Guided Example: Brick Destroyed Event (13 minutes)
 
-**Step 1: Create a Simple Event Manager (5 minutes)**
+**Step 1: Central Event Hub (optional, 5 minutes)**
 
-Create new script: `GameEvents.cs`
+Your project already includes a central event hub: `GameEvents_DecoupledEvent`. If introducing a hub, align with these signatures:
 ```csharp
 using UnityEngine;
 
-public class GameEvents : MonoBehaviour
+public class GameEvents_DecoupledEvent : MonoBehaviour
 {
-    // Singleton pattern - only one instance
-    public static GameEvents Instance;
-    
+    public static GameEvents_DecoupledEvent Instance { get; private set; }
+
+    public event System.Action<int> OnBrickDestroyed; // points
+    public event System.Action OnBallMissed;
+    public event System.Action<int> OnScoreChanged;
+    public event System.Action<int> OnLivesChanged;
+    public event System.Action OnGameOver;
+    public event System.Action<int> OnLevelCompleted; // levelNumber
+
     private void Awake()
     {
-        if (Instance == null)
-            Instance = this;
-        else
-            Destroy(gameObject);
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
-    
-    // Define events - these are the "announcements"
-    // System.Action is a simple event with no parameters
-    public event System.Action OnBrickDestroyed;
-    
-    // System.Action<int> is an event that sends an integer
-    public event System.Action<int> OnScoreChanged;
-    
-    // Call these methods to "announce" that something happened
-    public void BrickDestroyed()
-    {
-        OnBrickDestroyed?.Invoke();  // The ? makes it safe if no one is listening
-    }
-    
-    public void ScoreChanged(int newScore)
-    {
-        OnScoreChanged?.Invoke(newScore);
-    }
+
+    public void BrickDestroyed(int points) => OnBrickDestroyed?.Invoke(points);
+    public void BallMissed() => OnBallMissed?.Invoke();
+    public void ScoreChanged(int newScore) => OnScoreChanged?.Invoke(newScore);
+    public void LivesChanged(int newLives) => OnLivesChanged?.Invoke(newLives);
+    public void GameOver() => OnGameOver?.Invoke();
+    public void LevelCompleted(int levelNumber) => OnLevelCompleted?.Invoke(levelNumber);
 }
 ```
 
 **Step 2: Make Brick Announce When Destroyed (3 minutes)**
 
-Modify the `Brick.cs` Hit method:
+Your project’s brick already uses a static event to announce hits: `Brick_DecoupledEvent.OnBrickHit(Brick_DecoupledEvent brick, int points)`.
+
+Option A — keep current pattern (recommended for this course):
 ```csharp
-private void Hit()
+// In Brick_DecoupledEvent
+// After computing pointsToAdd and updating health/state
+OnBrickHit?.Invoke(this, pointsToAdd);
+```
+
+Option B — additionally forward to the central hub (if you want both patterns):
+```csharp
+if (GameEvents_DecoupledEvent.Instance != null)
 {
-    health--;
-    
-    if (health <= 0)
-    {
-        // Announce that this brick was destroyed
-        if (GameEvents.Instance != null)
-        {
-            GameEvents.Instance.BrickDestroyed();
-        }
-        
-        gameObject.SetActive(false);
-    }
-    
-    GameManager.Instance.OnBrickHit(this, pointsToAdd);
+    GameEvents_DecoupledEvent.Instance.BrickDestroyed(pointsToAdd);
 }
 ```
 
 **Step 3: Create a Listener (5 minutes)**
 
-Create new script: `BrickDestroyedListener.cs`
+Project-aligned listener that uses the static brick event:
 ```csharp
 using UnityEngine;
 
 public class BrickDestroyedListener : MonoBehaviour
 {
-    [Header("Settings")]
     [SerializeField] private AudioClip destroySound;
-    [SerializeField] private GameObject particlePrefab;
-    
     private AudioSource audioSource;
-    
-    private void Awake()
-    {
-        audioSource = GetComponent<AudioSource>();
-    }
-    
+
+    private void Awake() => audioSource = GetComponent<AudioSource>();
+
     private void OnEnable()
     {
-        // Subscribe - start listening to the event
-        if (GameEvents.Instance != null)
-        {
-            GameEvents.Instance.OnBrickDestroyed += HandleBrickDestroyed;
-        }
+        Brick_DecoupledEvent.OnBrickHit += HandleBrickHit;
     }
-    
+
     private void OnDisable()
     {
-        // Unsubscribe - stop listening (VERY IMPORTANT!)
-        if (GameEvents.Instance != null)
-        {
-            GameEvents.Instance.OnBrickDestroyed -= HandleBrickDestroyed;
-        }
+        Brick_DecoupledEvent.OnBrickHit -= HandleBrickHit;
     }
-    
-    // This method runs whenever ANY brick is destroyed
-    private void HandleBrickDestroyed()
+
+    private void HandleBrickHit(Brick_DecoupledEvent brick, int points)
     {
-        Debug.Log("A brick was destroyed!");
-        
         if (audioSource != null && destroySound != null)
         {
             audioSource.PlayOneShot(destroySound);
@@ -239,6 +216,8 @@ public class BrickDestroyedListener : MonoBehaviour
     }
 }
 ```
+
+Alternatively, if you standardize on the central hub, subscribe to `GameEvents_DecoupledEvent.OnBrickDestroyed` with an `int points` parameter.
 
 **Important Rules for C# Events:**
 1. Always subscribe in `OnEnable()` and unsubscribe in `OnDisable()`
@@ -272,6 +251,12 @@ public class BrickDestroyedListener : MonoBehaviour
 - Need complex data passed with the event
 - Building reusable systems
 
+Project note: You’re using two decoupling patterns successfully:
+- Per-class static events (e.g., `Brick_DecoupledEvent.OnBrickHit`, `ResetZone_DecoupledEvent.OnBallMissed`)
+- A central hub (optional) via `GameEvents_DecoupledEvent` for cross-system broadcasts (`OnScoreChanged`, `OnLivesChanged`, `OnLevelCompleted`, etc.)
+
+It’s fine to demonstrate both: static events for local interactions; the hub for broader notifications.
+
 ---
 
 ### **Part 5: Class Activity - Add Events to Your Game (8 minutes)**
@@ -283,8 +268,8 @@ public class BrickDestroyedListener : MonoBehaviour
 - Connect it to play a sound or particle effect in the Inspector
 
 **Option 2: Intermediate - Create Lives Changed Event**
-- Add a C# event to GameEvents for when lives change
-- Make GameManager announce when lives decrease
+- Add a C# event for lives on either `GameManager_DecoupledEvent` (static `OnLivesChanged`) or the hub `GameEvents_DecoupledEvent` (instance `OnLivesChanged`)
+- Make `GameManager_DecoupledEvent` raise it when lives decrease
 - Create a listener that logs to console or updates UI
 
 **Option 3: Advanced - Create Combo System**
@@ -315,15 +300,18 @@ public class BrickDestroyedListener : MonoBehaviour
 
 **Core Requirements:**
 
-1. **Create GameEvents Manager** with at least 3 events:
-   - `OnBrickDestroyed` - when any brick breaks
-   - `OnLivesChanged` - when player gains or loses a life
-   - `OnLevelComplete` - when all bricks are destroyed
+1. Choose one pattern (either is acceptable, stay consistent):
+    - Per-class static events (as used in your project):
+      - `Brick_DecoupledEvent.OnBrickHit(Brick_DecoupledEvent, int points)`
+      - `ResetZone_DecoupledEvent.OnBallMissed()`
+      - `GameManager_DecoupledEvent.OnScoreChanged(int)`, `OnLivesChanged(int)`, `OnLevelCompleted(int)`, `OnGameOver()`
+    - Or a central hub (optional): `GameEvents_DecoupledEvent` with
+      - `OnBrickDestroyed(int points)`, `OnBallMissed()`, `OnScoreChanged(int)`, `OnLivesChanged(int)`, `OnLevelCompleted(int)`, `OnGameOver()`
 
-2. **Implement Event Invoking**
-   - Make the appropriate scripts announce these events at the right time
+2. Implement event invoking
+    - Make the appropriate scripts announce these events at the right time (e.g., brick hit/destroy, ball missed, level completed)
 
-3. **Create At Least 6 Listeners** (2 per event), such as:
+3. Create at least 6 listeners (2 per event), such as:
    - Audio system that plays sounds
    - Particle effects spawner
    - UI updater for score/lives
@@ -331,10 +319,10 @@ public class BrickDestroyedListener : MonoBehaviour
    - Camera shake effect
    - Screen flash effect
 
-4. **Add One UnityEvent**
-   - Add a UnityEvent to any script
-   - Connect at least 2 responses in the Inspector
-   - Take a screenshot showing your setup
+4. Add one UnityEvent
+    - Add a `UnityEvent` to any script (e.g., `ResetZone_DecoupledEvent.OnBallMissedUnityEvent` as shown above)
+    - Connect at least 2 responses in the Inspector
+    - Take a screenshot showing your setup
 
 **Bonus Challenges:**
 - Create an event with parameters (e.g., `OnScoreChanged(int newScore)`)
@@ -350,10 +338,11 @@ public class BrickDestroyedListener : MonoBehaviour
   - Screenshots of Inspector setup for UnityEvents
 
 **Common Mistakes to Avoid:**
-- ❌ Forgetting to unsubscribe from C# events
-- ❌ Not checking if GameEvents.Instance is null
-- ❌ Using FindObjectOfType in frequently-called methods
-- ❌ Having events that are too specific (e.g., OnRedBrickInTopLeftDestroyed)
+- ❌ Forgetting to unsubscribe from C# events (`OnEnable`/`OnDisable`)
+- ❌ Not checking if `GameEvents_DecoupledEvent.Instance` is null before invoking (if you use the hub)
+- ❌ Using `FindObjectOfType` in frequently-called methods
+- ❌ Comparing by name instead of tag/component for collision checks (prefer `CompareTag("Ball")` or `GetComponent<Ball>()`)
+- ❌ Having events that are too specific (e.g., `OnRedBrickInTopLeftDestroyed`)
 
 ---
 

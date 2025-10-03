@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "ecc-unity-brickbreaker.sln"
+    "dotnet.defaultSolution": "unity-brick-breaker-tutorial.sln"
 }
