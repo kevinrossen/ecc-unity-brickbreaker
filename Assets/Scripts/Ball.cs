@@ -1,4 +1,7 @@
 ﻿using UnityEngine;
+// NEW INPUT SYSTEM: Using the new Input System package for modern input handling
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class Ball : MonoBehaviour
@@ -11,6 +14,16 @@ public class Ball : MonoBehaviour
     [SerializeField] private Transform spawnPoint;
     [Tooltip("Fallback spawn position if no spawn point is assigned. Defaults to the ball's initial position in the scene.")]
     [SerializeField] private Vector2 spawnPosition = Vector2.zero;
+
+    [Space(10)]
+    [Header("NEW INPUT SYSTEM: Button Speed Controls")]
+    [Range(0.5f, 1f)] [Tooltip("Multiplier when slow button (X) is pressed")]
+    [SerializeField] private float slowSpeedMultiplier = 0.5f;
+    
+    [Range(1f, 2.5f)] [Tooltip("Multiplier when fast button (Y) is pressed")]
+    [SerializeField] private float fastSpeedMultiplier = 2f;
+    
+    [SerializeField] private bool showDebugInfo = false;
 
     private void Awake()
     {
@@ -59,7 +72,62 @@ public class Ball : MonoBehaviour
 
     private void FixedUpdate()
     {
-        rb.linearVelocity = rb.linearVelocity.normalized * speed;
+        // NEW INPUT SYSTEM: Check button presses for speed modifiers
+        float speedMultiplier = 1f;
+        
+        // Check Gamepad buttons (PS5, Xbox controllers)
+        if (Gamepad.current != null)
+        {
+            // NEW INPUT SYSTEM: For PS5 - Square button (xButton/Pink) for FAST mode
+            if (Gamepad.current.xButton.isPressed)
+            {
+                speedMultiplier = fastSpeedMultiplier;
+                if (showDebugInfo) Debug.Log("🚀 BALL FAST MODE (Square Button / xButton)");
+            }
+            // NEW INPUT SYSTEM: For PS5 - Triangle button (yButton/Green) for SLOW mode
+            else if (Gamepad.current.yButton.isPressed)
+            {
+                speedMultiplier = slowSpeedMultiplier;
+                if (showDebugInfo) Debug.Log("🐢 BALL SLOW MODE (Triangle Button / yButton)");
+            }
+        }
+        // Check Joystick buttons (generic USB gamepad)
+        // Based on your gamepad mapping: Index 1 = X, Index 4 = Y
+        else if (Joystick.current != null)
+        {
+            // DEBUG: Log all button presses
+            if (showDebugInfo && Joystick.current.allControls.Count > 0)
+            {
+                for (int i = 0; i < Joystick.current.allControls.Count; i++)
+                {
+                    if (Joystick.current.allControls[i] is ButtonControl button && button.isPressed)
+                    {
+                        Debug.Log($"📍 Joystick Button Pressed: Index {i}");
+                    }
+                }
+            }
+            
+            // CORRECTED BUTTON MAPPING for generic USB gamepad:
+            // Index 1 = X (trigger), Index 4 = Y button
+            if (Joystick.current.allControls.Count > 4)
+            {
+                // Button Y (index 4) for FAST mode
+                if (Joystick.current.allControls[4] is ButtonControl yButton && yButton.isPressed)
+                {
+                    speedMultiplier = fastSpeedMultiplier;
+                    if (showDebugInfo) Debug.Log("🚀 BALL FAST MODE (Y Button - Joystick Index 4)");
+                }
+                // Button X (index 1) for SLOW mode
+                else if (Joystick.current.allControls[1] is ButtonControl xButton && xButton.isPressed)
+                {
+                    speedMultiplier = slowSpeedMultiplier;
+                    if (showDebugInfo) Debug.Log("🐢 BALL SLOW MODE (X Button - Joystick Index 1)");
+                }
+            }
+        }
+        
+        // Apply speed with multiplier
+        rb.linearVelocity = rb.linearVelocity.normalized * speed * speedMultiplier;
     }
 
 }
