@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de6c410914bdf9b47af03e3888f6f7df, type: 3}
   m_Name: GameSettings
   m_EditorClassIdentifier: Assembly-CSharp::GameSettings
-  ballSpeed: 17.5
+  ballSpeed: 19.7
   paddleMoveSpeed: 187
   paddleMaxBounceAngle: 70.5
   levelBuilder:

@@ -99,7 +99,7 @@ public class PaddleEnhanced : MonoBehaviour
         {
             DebugGamepadStatus();
         }
-        
+
         // NEW INPUT SYSTEM: Check for gamepad/controller input (left stick)
         // Gamepad.current is null if no controller is connected
         if (Gamepad.current != null)
