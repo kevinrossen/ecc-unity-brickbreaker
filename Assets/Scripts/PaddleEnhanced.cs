@@ -15,7 +15,7 @@ public class PaddleEnhanced : MonoBehaviour
     // [ColorUsage] - HDR color picker | [TextArea] - Multi-line text box
     
     [Header("Movement Settings")]
-    [Range(20f, 500f)] [Tooltip("How fast the paddle moves left and right")]
+    [Range(20f, 2500f)] [Tooltip("How fast the paddle moves left and right!!!")]
     [SerializeField] private float moveSpeed = 50f;
     
     [Range(0.5f, 2f)] [Tooltip("Multiplier for speed boost powerup")]
@@ -62,10 +62,10 @@ public class PaddleEnhanced : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();  // Get physics component
         // Optionally pull centralized settings from GameManager if assigned
-        if (GameManager.Instance != null)
+        if (GameManager_DecoupledEvent.Instance != null)
         {
-            var gm = GameManager.Instance;
-            var settingsField = typeof(GameManager).GetField("settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var gm = GameManager_DecoupledEvent.Instance;
+            var settingsField = typeof(GameManager_DecoupledEvent).GetField("settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (settingsField != null)
                 {
                     var settings = settingsField.GetValue(gm) as GameSettings;

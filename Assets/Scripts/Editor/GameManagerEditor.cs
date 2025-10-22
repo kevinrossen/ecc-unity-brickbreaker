@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(GameManager))]
+[CustomEditor(typeof(GameManager_DecoupledEvent))]
 public class GameManagerEditor : Editor
 {
     private SerializedProperty settingsProp;
@@ -55,7 +55,7 @@ public class GameManagerEditor : Editor
             {
                 if (GUILayout.Button("Apply Settings To Scene"))
                 {
-                    (target as GameManager)?.SendMessage("ApplySettings", SendMessageOptions.DontRequireReceiver);
+                    (target as GameManager_DecoupledEvent)?.SendMessage("ApplySettings", SendMessageOptions.DontRequireReceiver);
                 }
             }
             else
@@ -76,7 +76,8 @@ public class GameManagerEditor : Editor
     private void DrawPaddleSettings(GameSettings s)
     {
         EditorGUILayout.LabelField("Paddle", EditorStyles.boldLabel);
-        s.paddleMoveSpeed = EditorGUILayout.Slider("Move Speed", s.paddleMoveSpeed, 1f, 500f);
+        // Match the Paddle scripts' inspector range so central edits do not get clamped unexpectedly
+        s.paddleMoveSpeed = EditorGUILayout.Slider("Move Speed", s.paddleMoveSpeed, 20f, 2500f);
         s.paddleMaxBounceAngle = EditorGUILayout.Slider("Max Bounce Angle", s.paddleMaxBounceAngle, 0f, 85f);
     }
 

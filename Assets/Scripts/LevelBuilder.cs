@@ -396,21 +396,12 @@ public class LevelBuilder : MonoBehaviour
 
                 var go = (GameObject)Instantiate(prefab, pos, Quaternion.identity, rowParent);
 
-                // If the instantiated prefab has a Brick component, assign the data
-                // TODO: Remove this section after Brick_DecoupledEvent migration is complete
+                // Assign BrickData to Brick
                 var brick = go.GetComponent<Brick>();
                 if (brick != null)
                 {
                     brick.brickData = brickData;
                     brick.ResetBrick();
-                }
-
-                // New: Also assign brickData to Brick_DecoupledEvent for decoupled event system
-                var brickEvent = go.GetComponent<Brick_DecoupledEvent>();
-                if (brickEvent != null)
-                {
-                    brickEvent.brickData = brickData;
-                    brickEvent.ResetBrick();
                 }
             }
         }

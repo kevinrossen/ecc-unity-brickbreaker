@@ -15,7 +15,7 @@ public class GameManager_DecoupledEvent : MonoBehaviour
     private Paddle paddle;
     // Optional alternate paddle implementation (identified by type name at runtime)
     private MonoBehaviour paddleEnhanced;
-    private Brick_DecoupledEvent[] bricks;
+    private Brick[] bricks;
 
     public int level { get; private set; } = 1;
     public int score { get; private set; } = 0;
@@ -51,15 +51,15 @@ public class GameManager_DecoupledEvent : MonoBehaviour
     private void SubscribeToEvents()
     {
         // Subscribe to events from other components
-        ResetZone_DecoupledEvent.OnBallMissed += HandleBallMissed;
-        Brick_DecoupledEvent.OnBrickHit += HandleBrickHit;
+        ResetZone.OnBallMissed += HandleBallMissed;
+        Brick.OnBrickHit += HandleBrickHit;
     }
 
     private void UnsubscribeFromEvents()
     {
         // Always unsubscribe to prevent memory leaks
-        ResetZone_DecoupledEvent.OnBallMissed -= HandleBallMissed;
-        Brick_DecoupledEvent.OnBrickHit -= HandleBrickHit;
+        ResetZone.OnBallMissed -= HandleBallMissed;
+        Brick.OnBrickHit -= HandleBrickHit;
     }
 
     private void FindSceneReferences()
@@ -83,7 +83,7 @@ public class GameManager_DecoupledEvent : MonoBehaviour
             }
         }
 
-        bricks = FindObjectsByType<Brick_DecoupledEvent>(FindObjectsSortMode.None);
+        bricks = FindObjectsByType<Brick>(FindObjectsSortMode.None);
     }
 
     private void LoadLevel(int level)
@@ -286,14 +286,17 @@ public class GameManager_DecoupledEvent : MonoBehaviour
     }
 
     // Event handler for brick hits
-    private void HandleBrickHit(Brick_DecoupledEvent brick, int pointsEarned)
+    private void HandleBrickHit(Brick brick, int pointsEarned)
     {
+        Debug.Log($"[GameManager] HandleBrickHit called: brick={brick.name}, points={pointsEarned}");
+        
         score += pointsEarned;
 
         // Fire event so other systems (UI, audio, achievements) can react
         OnScoreChanged?.Invoke(score);
 
         if (Cleared()) {
+            Debug.Log($"[GameManager] Level cleared! Advancing to level {level + 1}");
             OnLevelCompleted?.Invoke(level);
             LoadLevel(level + 1);
         }
@@ -304,16 +307,19 @@ public class GameManager_DecoupledEvent : MonoBehaviour
         if (bricks == null || bricks.Length == 0)
         {
             // Attempt to (re)bind bricks array if missing
-            bricks = FindObjectsByType<Brick_DecoupledEvent>(FindObjectsSortMode.None);
+            bricks = FindObjectsByType<Brick>(FindObjectsSortMode.None);
         }
 
+        int breakableBricksRemaining = 0;
         for (int i = 0; i < bricks.Length; i++)
         {
             if (bricks[i].gameObject.activeInHierarchy && !bricks[i].unbreakable) {
-                return false;
+                breakableBricksRemaining++;
             }
         }
 
-        return true;
+        Debug.Log($"[GameManager] Cleared check: {breakableBricksRemaining} breakable bricks remaining out of {bricks.Length} total. Cleared={breakableBricksRemaining == 0}");
+
+        return breakableBricksRemaining == 0;
     }
 }

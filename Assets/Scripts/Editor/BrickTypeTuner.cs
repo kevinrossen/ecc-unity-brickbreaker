@@ -66,64 +66,52 @@ public static class BrickTypeTuner
         var sOrange = FindSprite("Brick-Orange");
         var sRed = FindSprite("Brick-Red");
 
+        // Helper to parse leading int
+        int ParseLeadingInt(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return 1;
+            int i = 0;
+            while (i < s.Length && char.IsWhiteSpace(s[i])) i++;
+            int start = i;
+            while (i < s.Length && char.IsDigit(s[i])) i++;
+            if (i > start && int.TryParse(s.Substring(start, i - start), out int value)) return value;
+            return 1;
+        }
+
         // A handy array for multi-state bricks (index 0 = full health)
         Sprite[] fiveState = new[] { sBlue, sGreen, sYellow, sOrange, sRed }.Where(s => s != null).ToArray();
 
         int updated = 0;
 
-        if (weak != null)
+        foreach (var brick in all)
         {
-            Undo.RecordObject(weak, "Tune Weak Brick");
-            weak.isUnbreakable = false;
-            weak.maxHealth = 2;
-            weak.pointValue = 50;
-            weak.brickColor = Color.red; // fallback color when no sprites
-            if (sRed != null) weak.healthStates = new[] { sRed };
-            EditorUtility.SetDirty(weak);
-            updated++;
-        }
-
-        if (basic != null)
-        {
-            Undo.RecordObject(basic, "Tune Basic Brick");
-            basic.isUnbreakable = false;
-            basic.maxHealth = 5;
-            basic.pointValue = 100;
-            if (fiveState.Length > 0) basic.healthStates = fiveState;
-            basic.brickColor = new Color(1f, 0.5f, 0f); // orange-ish fallback
-            EditorUtility.SetDirty(basic);
-            updated++;
-        }
-
-        if (strong != null)
-        {
-            Undo.RecordObject(strong, "Tune Strong Brick");
-            strong.isUnbreakable = false;
-            strong.maxHealth = 8; // tougher than Basic
-            strong.pointValue = 200;
-            if (fiveState.Length > 0) strong.healthStates = fiveState;
-            strong.brickColor = Color.green; // fallback
-            EditorUtility.SetDirty(strong);
-            updated++;
-        }
-
-        if (unbreak != null)
-        {
-            Undo.RecordObject(unbreak, "Tune Unbreakable Brick");
-            unbreak.isUnbreakable = true;
-            unbreak.maxHealth = 1;
-            unbreak.pointValue = 0;
-            unbreak.healthStates = new Sprite[0];
-            unbreak.brickColor = Color.gray;
-            EditorUtility.SetDirty(unbreak);
+            int brickTypeValue = ParseLeadingInt(brick.name);
+            Undo.RecordObject(brick, $"Tune {brick.name}");
+            if (brickTypeValue == 0)
+            {
+                // Unbreakable
+                brick.isUnbreakable = true;
+                brick.pointValue = 0;
+                brick.healthStates = new Sprite[0];
+                brick.brickColor = Color.gray;
+            }
+            else
+            {
+                // Breakable
+                brick.isUnbreakable = false;
+                brick.pointValue = brickTypeValue * 50; // e.g., 1=50, 2=100, etc.
+                if (fiveState.Length > 0) brick.healthStates = fiveState;
+                brick.brickColor = Color.Lerp(Color.red, Color.green, (brickTypeValue - 1f) / 7f); // gradient from red to green
+            }
+            EditorUtility.SetDirty(brick);
             updated++;
         }
 
         AssetDatabase.SaveAssets();
 
         EditorUtility.DisplayDialog("Tune Brick Types", updated > 0
-            ? $"Updated {updated} BrickData asset(s).\nWeak/Basic/Strong assigned defaults and sprites when available; Unbreakable set to gray."
-            : "No named BrickData assets matched Weak/Basic/Strong/Unbreak.",
+            ? $"Updated {updated} BrickData asset(s) based on their names."
+            : "No BrickData assets found.",
             "OK");
     }
 }

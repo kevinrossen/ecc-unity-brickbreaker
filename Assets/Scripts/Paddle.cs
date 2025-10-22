@@ -17,10 +17,10 @@ public class Paddle : MonoBehaviour
     private void Start()
     {
         // Pull central settings if available
-        if (GameManager.Instance != null)
+        if (GameManager_DecoupledEvent.Instance != null)
         {
-            var gm = GameManager.Instance;
-            var settingsField = typeof(GameManager).GetField("settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var gm = GameManager_DecoupledEvent.Instance;
+            var settingsField = typeof(GameManager_DecoupledEvent).GetField("settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (settingsField != null)
             {
                 var settings = settingsField.GetValue(gm) as GameSettings;

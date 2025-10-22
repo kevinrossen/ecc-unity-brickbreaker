@@ -17,6 +17,10 @@ public class Brick : MonoBehaviour
     private int health;
     private AudioSource audioSource;
 
+    // Event that other systems can subscribe to (decoupled event system)
+    // Passes the brick instance and points earned
+    public static event System.Action<Brick, int> OnBrickHit;
+
     private void EnsureComponents()
     {
         if (spriteRenderer == null)
@@ -43,6 +47,20 @@ public class Brick : MonoBehaviour
         float t = (remaining - 1f) / (max - 1f); // 0..1
         int idx = Mathf.RoundToInt(t * (spriteCount - 1));
         return Mathf.Clamp(idx, 0, spriteCount - 1);
+    }
+
+    private int ParseBrickTypeValue(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return 1;
+        int i = 0;
+        while (i < name.Length && char.IsWhiteSpace(name[i])) i++;
+        int start = i;
+        while (i < name.Length && char.IsDigit(name[i])) i++;
+        if (i > start)
+        {
+            if (int.TryParse(name.Substring(start, i - start), out int value)) return value;
+        }
+        return 1; // default
     }
 
     private Color HealthToColor(int remaining, int max, bool unbreakable)
@@ -82,21 +100,29 @@ public void ResetBrick()
         bool useScriptableObject = brickData != null;
         bool isUnbreakableBlock = useScriptableObject ? brickData.isUnbreakable : unbreakable;
         
+        // Update the unbreakable field to match the data
+        if (useScriptableObject)
+        {
+            unbreakable = brickData.isUnbreakable;
+        }
+        
         if (!isUnbreakableBlock)
         {
             if (useScriptableObject)
             {
-                health = Mathf.Max(1, brickData.maxHealth);
+                int brickTypeValue = ParseBrickTypeValue(brickData.name);
+                health = Mathf.Max(1, brickTypeValue);
+                int effectiveMaxHealth = brickTypeValue;
                 if (brickData.healthStates.Length > 0 && spriteRenderer != null && (visualProfile == null || visualProfile.preferSpritesWhenAvailable))
                 {
-                    int idx = SpriteIndexForHealth(health, brickData.maxHealth, brickData.healthStates.Length);
+                    int idx = SpriteIndexForHealth(health, effectiveMaxHealth, brickData.healthStates.Length);
                     spriteRenderer.sprite = brickData.healthStates[Mathf.Clamp(idx, 0, brickData.healthStates.Length - 1)];
                     // When using per-health sprites, don't override colors; assume sprites carry the visual state
                 }
                 else if (spriteRenderer != null)
                 {
                     // No per-health sprites: encode strength via color
-                    spriteRenderer.color = HealthToColor(health, brickData.maxHealth, false);
+                    spriteRenderer.color = HealthToColor(health, effectiveMaxHealth, false);
                 }
             }
             else
@@ -148,13 +174,21 @@ private void Hit()
             }
             
             gameObject.SetActive(false);
+            
+            // Calculate points
+            int pointsToAdd = useScriptableObject ? brickData.pointValue : points;
+            
+            // Fire event for all listening systems (GameManager, AudioManager, ParticleManager, etc.)
+            OnBrickHit?.Invoke(this, pointsToAdd);
         } 
         else 
         {
             // Update sprite based on remaining health (highest index at full health)
             if (useScriptableObject && brickData.healthStates.Length > 0 && spriteRenderer != null && (visualProfile == null || visualProfile.preferSpritesWhenAvailable))
             {
-                int spriteIndex = SpriteIndexForHealth(health, brickData.maxHealth, brickData.healthStates.Length);
+                int brickTypeValue = ParseBrickTypeValue(brickData.name);
+                int effectiveMaxHealth = brickTypeValue;
+                int spriteIndex = SpriteIndexForHealth(health, effectiveMaxHealth, brickData.healthStates.Length);
                 spriteRenderer.sprite = brickData.healthStates[Mathf.Clamp(spriteIndex, 0, brickData.healthStates.Length - 1)];
             }
             else if (states.Length > 0 && spriteRenderer != null)
@@ -166,13 +200,11 @@ private void Hit()
             else if (useScriptableObject && spriteRenderer != null)
             {
                 // No per-health sprites: update color to reflect remaining strength
-                spriteRenderer.color = HealthToColor(health, brickData.maxHealth, isUnbreakableBlock);
+                int brickTypeValue = ParseBrickTypeValue(brickData.name);
+                int effectiveMaxHealth = brickTypeValue;
+                spriteRenderer.color = HealthToColor(health, effectiveMaxHealth, isUnbreakableBlock);
             }
         }
-
-        // Calculate points
-        int pointsToAdd = useScriptableObject ? brickData.pointValue : points;
-        GameManager.Instance.OnBrickHit(this, pointsToAdd);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)

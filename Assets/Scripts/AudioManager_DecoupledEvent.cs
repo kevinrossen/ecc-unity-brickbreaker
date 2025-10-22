@@ -23,8 +23,8 @@ public class AudioManager_DecoupledEvent : MonoBehaviour
     private void OnEnable()
     {
         // Subscribe to events from different components
-        Brick_DecoupledEvent.OnBrickHit += OnBrickDestroyed;
-        ResetZone_DecoupledEvent.OnBallMissed += OnBallMissed;
+        Brick.OnBrickHit += OnBrickDestroyed;
+        ResetZone.OnBallMissed += OnBallMissed;
         GameManager_DecoupledEvent.OnLevelCompleted += OnLevelCompleted;
         GameManager_DecoupledEvent.OnGameOver += OnGameOver;
     }
@@ -32,13 +32,13 @@ public class AudioManager_DecoupledEvent : MonoBehaviour
     private void OnDisable()
     {
         // Always unsubscribe to prevent memory leaks
-        Brick_DecoupledEvent.OnBrickHit -= OnBrickDestroyed;
-        ResetZone_DecoupledEvent.OnBallMissed -= OnBallMissed;
+        Brick.OnBrickHit -= OnBrickDestroyed;
+        ResetZone.OnBallMissed -= OnBallMissed;
         GameManager_DecoupledEvent.OnLevelCompleted -= OnLevelCompleted;
         GameManager_DecoupledEvent.OnGameOver -= OnGameOver;
     }
 
-    private void OnBrickDestroyed(Brick_DecoupledEvent brick, int points)
+    private void OnBrickDestroyed(Brick brick, int points)
     {
         // Only play sound when brick is actually destroyed (health <= 0)
         // This would need to be modified based on your brick logic

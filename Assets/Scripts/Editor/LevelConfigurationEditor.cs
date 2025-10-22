@@ -26,11 +26,11 @@ public class LevelConfigurationEditor : Editor
     private int StrengthKey(BrickData b)
     {
         if (b == null) return int.MinValue;
-        // Prefer leading integer in name (e.g., "4-StrongBrick")
+        // Use leading integer in name (e.g., "4-StrongBrick")
         int? parsed = TryParseLeadingInt(b.name);
         if (parsed.HasValue) return parsed.Value;
-        // Fallback to maxHealth
-        return Mathf.Max(1, b.maxHealth);
+        // Default to 1
+        return 1;
     }
 
     private int? TryParseLeadingInt(string s)
@@ -297,7 +297,7 @@ public class LevelConfigurationEditor : Editor
         if (brick == null) return Color.clear;
         if (brick.isUnbreakable) return Color.gray;
 
-        // Determine relative strength among available breakables using maxHealth
+        // Determine relative strength among available breakables using strength key
         int minH = int.MaxValue;
         int maxH = int.MinValue;
         if (config.availableBrickTypes != null)
@@ -305,15 +305,16 @@ public class LevelConfigurationEditor : Editor
             foreach (var t in config.availableBrickTypes)
             {
                 if (t == null || t.isUnbreakable) continue;
-                minH = Mathf.Min(minH, Mathf.Max(1, t.maxHealth));
-                maxH = Mathf.Max(maxH, Mathf.Max(1, t.maxHealth));
+                int strength = StrengthKey(t);
+                minH = Mathf.Min(minH, strength);
+                maxH = Mathf.Max(maxH, strength);
             }
         }
-        if (minH == int.MaxValue) { minH = 1; maxH = Mathf.Max(1, brick.maxHealth); }
+        if (minH == int.MaxValue) { minH = 1; maxH = StrengthKey(brick); }
 
         float range = Mathf.Max(1, maxH - minH);
         // tStrong=0 (red) for strongest, 1 (cyan) for weakest
-        float tStrong = 1f - (Mathf.Max(1, brick.maxHealth) - minH) / range;
+        float tStrong = 1f - (StrengthKey(brick) - minH) / range;
 
         // Simple 4-stop palette (matches Brick.HealthToColor ordering)
         if (tStrong < 0.25f) return Color.red;
@@ -548,7 +549,7 @@ public class LevelConfigurationEditor : Editor
         var breakables = new System.Collections.Generic.List<BrickData>();
         foreach (var t in config.availableBrickTypes) { if (t != null && !t.isUnbreakable) breakables.Add(t); }
         if (breakables.Count == 0) return;
-        breakables.Sort((a,b)=>b.maxHealth.CompareTo(a.maxHealth));
+        breakables.Sort((a,b) => StrengthKey(b).CompareTo(StrengthKey(a)));
         BrickData interior = FindByName("basic") ?? breakables[0];
 
         int rows = Mathf.Max(1, config.rows);

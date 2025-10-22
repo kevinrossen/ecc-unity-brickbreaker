@@ -115,16 +115,18 @@ public class Brick_GameEventsVersion : MonoBehaviour
         {
             if (useScriptableObject)
             {
-                health = Mathf.Max(1, brickData.maxHealth);
+                int brickTypeValue = ParseBrickTypeValue(brickData.name);
+                health = Mathf.Max(1, brickTypeValue);
+                int effectiveMaxHealth = brickTypeValue;
                 if (brickData.healthStates.Length > 0 && spriteRenderer != null && (visualProfile == null || visualProfile.preferSpritesWhenAvailable))
                 {
-                    int idx = SpriteIndexForHealth(health, brickData.maxHealth, brickData.healthStates.Length);
+                    int idx = SpriteIndexForHealth(health, effectiveMaxHealth, brickData.healthStates.Length);
                     spriteRenderer.sprite = brickData.healthStates[Mathf.Clamp(idx, 0, brickData.healthStates.Length - 1)];
                 }
                 else if (spriteRenderer != null)
                 {
                     // No per-health sprites: encode strength via color
-                    spriteRenderer.color = HealthToColor(health, brickData.maxHealth, false);
+                    spriteRenderer.color = HealthToColor(health, effectiveMaxHealth, false);
                 }
             }
             else
@@ -171,6 +173,20 @@ public class Brick_GameEventsVersion : MonoBehaviour
         return Color.cyan;
     }
 
+    private int ParseBrickTypeValue(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return 1;
+        int i = 0;
+        while (i < name.Length && char.IsWhiteSpace(name[i])) i++;
+        int start = i;
+        while (i < name.Length && char.IsDigit(name[i])) i++;
+        if (i > start)
+        {
+            if (int.TryParse(name.Substring(start, i - start), out int value)) return value;
+        }
+        return 1; // default
+    }
+
     private void Hit()
     {
         EnsureComponents();
@@ -213,7 +229,9 @@ public class Brick_GameEventsVersion : MonoBehaviour
             // Update sprite based on remaining health
             if (useScriptableObject && brickData.healthStates.Length > 0 && spriteRenderer != null && (visualProfile == null || visualProfile.preferSpritesWhenAvailable))
             {
-                int spriteIndex = SpriteIndexForHealth(health, brickData.maxHealth, brickData.healthStates.Length);
+                int brickTypeValue = ParseBrickTypeValue(brickData.name);
+                int effectiveMaxHealth = brickTypeValue;
+                int spriteIndex = SpriteIndexForHealth(health, effectiveMaxHealth, brickData.healthStates.Length);
                 spriteRenderer.sprite = brickData.healthStates[Mathf.Clamp(spriteIndex, 0, brickData.healthStates.Length - 1)];
             }
             else if (states.Length > 0 && spriteRenderer != null)
@@ -223,7 +241,9 @@ public class Brick_GameEventsVersion : MonoBehaviour
             }
             else if (useScriptableObject && spriteRenderer != null)
             {
-                spriteRenderer.color = HealthToColor(health, brickData.maxHealth, isUnbreakableBlock);
+                int brickTypeValue = ParseBrickTypeValue(brickData.name);
+                int effectiveMaxHealth = brickTypeValue;
+                spriteRenderer.color = HealthToColor(health, effectiveMaxHealth, isUnbreakableBlock);
             }
         }
 

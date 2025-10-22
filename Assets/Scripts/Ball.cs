@@ -38,10 +38,10 @@ public class Ball : MonoBehaviour
     private void Start()
     {
         // If a central settings asset is present, allow it to drive speed
-        if (GameManager.Instance != null)
+        if (GameManager_DecoupledEvent.Instance != null)
         {
-            var gm = GameManager.Instance;
-            var settingsField = typeof(GameManager).GetField("settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var gm = GameManager_DecoupledEvent.Instance;
+            var settingsField = typeof(GameManager_DecoupledEvent).GetField("settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (settingsField != null)
             {
                 var settings = settingsField.GetValue(gm) as GameSettings;

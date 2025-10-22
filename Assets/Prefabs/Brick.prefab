@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 534804146086615083}
   - component: {fileID: 534804146086615086}
   - component: {fileID: 534804146086615085}
-  - component: {fileID: -188958167600190943}
   m_Layer: 0
   m_Name: Brick
   m_TagString: Brick
@@ -146,7 +145,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 534804146086615082}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d6cbeba8dfc73a949b261f16f8d8bc0d, type: 3}
   m_Name: 
@@ -159,22 +158,5 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 8a1f3a2b7be337041b9f2c591cc617db, type: 3}
   - {fileID: 21300000, guid: ded5f72da8d54b44d85ace0c5548180d, type: 3}
   - {fileID: 21300000, guid: 5e536f2cc14b65a44b8e9532d24f6c72, type: 3}
-  points: 100
-  unbreakable: 0
---- !u!114 &-188958167600190943
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 534804146086615082}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0544d4d1d3480a94c826ef202cc8a750, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Brick_DecoupledEvent
-  brickData: {fileID: 0}
-  visualProfile: {fileID: 0}
-  states: []
   points: 100
   unbreakable: 0
