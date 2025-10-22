@@ -8,18 +8,22 @@ public class GameManager_DecoupledEvent : MonoBehaviour
 
     private const int NUM_LEVELS = 2;
 
+    [Header("Game State")]
+    public int levelDisplay = 1;
+    public int scoreDisplay = 0;
+    public int livesDisplay = 3;
+
+    public int level { get { return levelDisplay; } private set { levelDisplay = value; } }
+    public int score { get { return scoreDisplay; } private set { scoreDisplay = value; } }
+    public int lives { get { return livesDisplay; } private set { livesDisplay = value; } }
+
     [Header("Central Settings")]
     [SerializeField] private GameSettings settings;
 
     private Ball ball;
-    private Paddle paddle;
-    // Optional alternate paddle implementation (identified by type name at runtime)
+    // Paddle implementation (identified by type name at runtime)
     private MonoBehaviour paddleEnhanced;
     private Brick[] bricks;
-
-    public int level { get; private set; } = 1;
-    public int score { get; private set; } = 0;
-    public int lives { get; private set; } = 3;
 
     // Events that other systems can subscribe to
     public static event System.Action<int> OnScoreChanged;
@@ -48,6 +52,18 @@ public class GameManager_DecoupledEvent : MonoBehaviour
         }
     }
 
+    // Ensure UI shows correct starting values even if scene serialized values were zeroed
+    private void Start()
+    {
+        // Some scenes may have serialized zeros for these fields; initialize sensible defaults
+        if (lives <= 0) lives = 3;
+        if (level <= 0) level = 1;
+
+        // Notify listeners so UI and audio reflect the initial state immediately
+        OnScoreChanged?.Invoke(score);
+        OnLivesChanged?.Invoke(lives);
+    }
+
     private void SubscribeToEvents()
     {
         // Subscribe to events from other components
@@ -65,10 +81,6 @@ public class GameManager_DecoupledEvent : MonoBehaviour
     private void FindSceneReferences()
     {
         ball = FindFirstObjectByType<Ball>();
-
-        // Pick the active standard Paddle if present
-        var paddles = FindObjectsByType<Paddle>(FindObjectsSortMode.None);
-        paddle = System.Array.Find(paddles, p => p != null && p.isActiveAndEnabled);
 
         // Pick an active PaddleEnhanced (by name to avoid hard compile dependency)
         paddleEnhanced = null;
@@ -127,16 +139,16 @@ public class GameManager_DecoupledEvent : MonoBehaviour
     private void ResetLevel()
     {
         // Ensure references are valid (can be lost on scene reloads or domain refreshes)
-        if ((paddle == null && paddleEnhanced == null) || ball == null)
+        if (paddleEnhanced == null || ball == null)
         {
             // Try a silent rebind first to avoid noisy warnings during normal play
             FindSceneReferences();
             ApplySettings();
 
             // If still missing after rebind, surface a clear error
-            if ((paddle == null && paddleEnhanced == null) || ball == null)
+            if (paddleEnhanced == null || ball == null)
             {
-                Debug.LogError("GameManager: Missing scene references after rebind attempt. Check that a Ball and a Paddle (or PaddleEnhanced) exist and are active in the scene.");
+                Debug.LogError("GameManager: Missing scene references after rebind attempt. Check that a Ball and a PaddleEnhanced exist and are active in the scene.");
             }
         }
 
@@ -164,18 +176,6 @@ public class GameManager_DecoupledEvent : MonoBehaviour
         if (ball != null)
         {
             ball.speed = settings.ballSpeed;
-        }
-
-        // Apply to standard Paddle
-        if (paddle == null)
-        {
-            var paddles = FindObjectsByType<Paddle>(FindObjectsSortMode.None);
-            paddle = System.Array.Find(paddles, p => p != null && p.isActiveAndEnabled);
-        }
-        if (paddle != null)
-        {
-            paddle.speed = settings.paddleMoveSpeed;
-            paddle.maxBounceAngle = settings.paddleMaxBounceAngle;
         }
 
         // Apply to PaddleEnhanced via reflection of known fields
@@ -239,12 +239,6 @@ public class GameManager_DecoupledEvent : MonoBehaviour
 
     private void ResetActivePaddle()
     {
-        if (paddle != null && paddle.isActiveAndEnabled)
-        {
-            paddle.ResetPaddle();
-            return;
-        }
-
         if (paddleEnhanced != null && paddleEnhanced.isActiveAndEnabled)
         {
             var rb = paddleEnhanced.GetComponent<Rigidbody2D>();
@@ -260,7 +254,7 @@ public class GameManager_DecoupledEvent : MonoBehaviour
             return;
         }
 
-        Debug.LogError("GameManager: No active paddle found (neither Paddle nor PaddleEnhanced).");
+        Debug.LogError("GameManager: No active PaddleEnhanced found.");
     }
 
     private void GameOver()
