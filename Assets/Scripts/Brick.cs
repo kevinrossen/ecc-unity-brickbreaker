@@ -16,6 +16,8 @@ public class Brick : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private int health;
     private AudioSource audioSource;
+    private static AudioClip defaultDestroyClip;
+    private const string DefaultDestroyClipPath = "Audio/boing";
 
     // Event that other systems can subscribe to (decoupled event system)
     // Passes the brick instance and points earned
@@ -27,6 +29,15 @@ public class Brick : MonoBehaviour
             spriteRenderer = GetComponent<SpriteRenderer>();
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
+    }
+
+    private AudioClip GetDefaultDestroyClip()
+    {
+        if (defaultDestroyClip == null)
+        {
+            defaultDestroyClip = Resources.Load<AudioClip>(DefaultDestroyClipPath);
+        }
+        return defaultDestroyClip;
     }
 
     // Maps current health to a sprite index when using a sequence of sprites
@@ -159,9 +170,21 @@ private void Hit()
         if (health <= 0) 
         {
             // Play destroy sound
-            if (useScriptableObject && brickData.destroySound != null && audioSource != null)
+            if (audioSource != null)
             {
-                audioSource.PlayOneShot(brickData.destroySound);
+                AudioClip destroyClip = null;
+                if (useScriptableObject)
+                {
+                    destroyClip = brickData.destroySound;
+                }
+                if (destroyClip == null)
+                {
+                    destroyClip = GetDefaultDestroyClip();
+                }
+                if (destroyClip != null)
+                {
+                    audioSource.PlayOneShot(destroyClip);
+                }
             }
             
             // Check for powerup spawn

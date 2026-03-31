@@ -17,6 +17,11 @@ public class BrickData : ScriptableObject
     public GameObject powerupPrefab;
     [Range(0f, 1f)]
     public float powerupDropChance = 0.1f;
+
+    [Header("Multi-Ball")]
+    public bool triggersMultiBall;
+    [Range(1,4)] public int extraBalls = 2;
+    public float spreadAngle = 25f;
     
     [Header("Audio")]
     public AudioClip hitSound;

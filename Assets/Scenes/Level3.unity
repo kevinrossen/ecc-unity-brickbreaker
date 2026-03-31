@@ -5624,8 +5624,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 627d3875321d1f9418b66793c328e80b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 136.9
-  maxBounceAngle: 75
 --- !u!61 &643625437
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -8642,8 +8640,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8836798b9c541f458e5ead2e4e792de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PaddleEnhanced
-  moveSpeed: 301
+  moveSpeed: 585
   speedBoostMultiplier: 0.91
+  slowSpeedMultiplier: 0.5
+  fastSpeedMultiplier: 2
   maxBounceAngle: 75
   paddleWidthMultiplier: 2.38
   paddleHeightMultiplier: 0.88
@@ -8651,6 +8651,10 @@ MonoBehaviour:
   powerupColor: {r: 0, g: 1, b: 1, a: 1}
   showDebugInfo: 0
   designNotes: Add any design notes here for level designers...
+  minScale: 0.5
+  maxScale: 1.5
+  minInterval: 2
+  maxInterval: 5
 --- !u!61 &1046218393
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -10300,7 +10304,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa6b1e99d01df174b8560f6cc2417735, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  settings: {fileID: 11400000, guid: 3b5479c6235acab4da24c537ca57e5bf, type: 2}
 --- !u!4 &1280164217
 Transform:
   m_ObjectHideFlags: 0
@@ -12282,9 +12285,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ca33a30c308bd1498177c939b9574da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 17.8
+  speed: 14.6
   spawnPoint: {fileID: 1081720738}
   spawnPosition: {x: 0, y: 0}
+  slowSpeedMultiplier: 0.5
+  fastSpeedMultiplier: 2
+  showDebugInfo: 0
 --- !u!58 &1567837728
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -14179,6 +14185,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1e359f4a04342d4cb562163db9122f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnBallMissedUnityEvent:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!61 &1775402257
 BoxCollider2D:
   m_ObjectHideFlags: 0

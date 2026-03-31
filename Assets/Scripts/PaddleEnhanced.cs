@@ -2,6 +2,7 @@ using UnityEngine;
 // NEW INPUT SYSTEM: Using the new Input System package for modern input handling
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using System.Collections;
 
 // Enhanced Paddle script demonstrating Unity attributes, input handling, and physics.
 // Shows component-based architecture for beginner-intermediate game development.
@@ -51,6 +52,20 @@ public class PaddleEnhanced : MonoBehaviour
     [SerializeField] private bool showDebugInfo = false;
     [TextArea(3, 5)] [SerializeField] private string designNotes = "Add any design notes here for level designers...";
     
+    [Space(10)]
+    [Header("Size Animation")]
+    [Range(0.5f, 2f)] [Tooltip("Minimum horizontal scale multiplier")]
+    [SerializeField] private float minScale = 0.5f;
+    
+    [Range(0.5f, 2f)] [Tooltip("Maximum horizontal scale multiplier")]
+    [SerializeField] private float maxScale = 1.5f;
+    
+    [Range(1f, 10f)] [Tooltip("Minimum time between size changes")]
+    [SerializeField] private float minInterval = 2f;
+    
+    [Range(1f, 10f)] [Tooltip("Maximum time between size changes")]
+    [SerializeField] private float maxInterval = 5f;
+    
     // PRIVATE VARIABLES: Not visible in Inspector, used for runtime logic
     private Rigidbody2D rb;        // Physics component for movement
     private float currentSpeed;    // Tracks current movement speed (can change with powerups)
@@ -77,6 +92,7 @@ public class PaddleEnhanced : MonoBehaviour
                 }
         }
         currentSpeed = moveSpeed;           // Set initial speed
+        StartCoroutine(RandomSizeChange()); // Start random size changes
     }
     
     // Called every frame - handle continuous input and updates
@@ -262,5 +278,20 @@ public class PaddleEnhanced : MonoBehaviour
 
         // Reapply speed with new direction
         ball.linearVelocity = ballDirection * ballSpeed;
+    }
+
+    // RANDOM SIZE CHANGE: Coroutine to randomly change paddle width
+    private IEnumerator RandomSizeChange()
+    {
+        while (true)
+        {
+            // Wait for a random interval
+            float interval = Random.Range(minInterval, maxInterval);
+            yield return new WaitForSeconds(interval);
+            
+            // Set a random horizontal scale
+            float newScale = Random.Range(minScale, maxScale);
+            transform.localScale = new Vector3(newScale, 1f, 1f);
+        }
     }
 }

@@ -7,7 +7,7 @@ using UnityEngine.InputSystem.Controls;
 public class Ball : MonoBehaviour
 {
     private Rigidbody2D rb;
-    public float speed = 10f;
+    public float speed = 800f;
 
     [Header("Spawning")]
     [Tooltip("Optional. If set, the ball will spawn at this Transform's position.")]
